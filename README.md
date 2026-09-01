@@ -23,6 +23,16 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) to view the site.
 
+## Environment Variables
+
+Copy `.env.example` to `.env.local` and fill in the real value:
+
+| Variable | Description |
+|---|---|
+| `NEXT_PUBLIC_CONTACT_WORKER_URL` | URL of the Cloudflare Worker that receives and emails contact-form submissions. Public value — safe to be visible client-side. |
+
+No email-sending secrets live in this repo. The Worker that actually sends mail (via Cloudflare Email Service) is a separate deployment on Cloudflare, with its own sender/recipient addresses stored as encrypted Worker secrets, not here.
+
 ## Scripts
 
 | Command | Description |
@@ -43,6 +53,13 @@ public/           Static assets (icons, robots.txt)
 ```
 
 Blog posts live as plain data in `src/lib/posts.ts` — add a new entry there to publish a post.
+
+## Contact Form
+
+`src/components/contact-section.tsx` submits to a Cloudflare Worker (deployed
+separately, not part of this repo) at the URL in `NEXT_PUBLIC_CONTACT_WORKER_URL`.
+The Worker sends the message on via Cloudflare Email Service — no email API key
+or recipient address is stored in this codebase.
 
 ## Deployment
 
