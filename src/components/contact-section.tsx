@@ -7,13 +7,34 @@ import { useState, type FormEvent } from 'react';
 export function ContactSection() {
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setStatus('sending');
-    setTimeout(() => {
+
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
+    try {
+      const res = await fetch(process.env.NEXT_PUBLIC_CONTACT_WORKER_URL as string, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.get('name'),
+          email: formData.get('email'),
+          message: formData.get('message'),
+          website: formData.get('website'), // honeypot, real users never see/fill this
+        }),
+      });
+
+      if (!res.ok) throw new Error('Request failed');
+
+      form.reset();
       setStatus('success');
+    } catch {
+      setStatus('error');
+    } finally {
       setTimeout(() => setStatus('idle'), 3000);
-    }, 1200);
+    }
   };
 
   return (
@@ -71,6 +92,16 @@ export function ContactSection() {
               </motion.div>
             )}
 
+            {/* Honeypot: hidden from real users, bots often fill every field */}
+            <input
+              type="text"
+              name="website"
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+              className="absolute -left-[9999px] h-0 w-0 opacity-0"
+            />
+
             <div className="grid gap-5 sm:grid-cols-2">
               <div className="space-y-2">
                 <label htmlFor="name" className="text-xs font-mono text-muted-foreground">{'${name}'}</label>
@@ -78,6 +109,7 @@ export function ContactSection() {
                   <User className="absolute top-1/2 -translate-y-1/2 start-3 h-4 w-4 text-muted-foreground/40" />
                   <input
                     id="name"
+                    name="name"
                     type="text"
                     required
                     className="h-11 w-full rounded-lg border border-border/50 bg-background/80 ps-10 pe-4 text-sm font-mono text-foreground placeholder:text-muted-foreground/30 focus:border-emerald-accent/50 focus:outline-none focus:ring-2 focus:ring-emerald-accent/20 transition-colors"
@@ -92,6 +124,7 @@ export function ContactSection() {
                   <Mail className="absolute top-1/2 -translate-y-1/2 start-3 h-4 w-4 text-muted-foreground/40" />
                   <input
                     id="email"
+                    name="email"
                     type="email"
                     required
                     className="h-11 w-full rounded-lg border border-border/50 bg-background/80 ps-10 pe-4 text-sm font-mono text-foreground placeholder:text-muted-foreground/30 focus:border-emerald-accent/50 focus:outline-none focus:ring-2 focus:ring-emerald-accent/20 transition-colors"
@@ -107,6 +140,7 @@ export function ContactSection() {
                 <MessageSquare className="absolute top-3 start-3 h-4 w-4 text-muted-foreground/40" />
                 <textarea
                   id="message"
+                  name="message"
                   rows={5}
                   required
                   className="w-full rounded-lg border border-border/50 bg-background/80 ps-10 pe-4 py-3 text-sm font-mono text-foreground placeholder:text-muted-foreground/30 focus:border-emerald-accent/50 focus:outline-none focus:ring-2 focus:ring-emerald-accent/20 transition-colors resize-none"
